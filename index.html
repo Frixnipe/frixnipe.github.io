@@ -1,7 +1,318 @@
 <!DOCTYPE html>
+<!-- Created with https://packager.turbowarp.org/ -->
 <html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- We only include this to explicitly loosen the CSP of various packager environments. It does not provide any security. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob:">
+  <title>AX</title>
+  <style>
+    body {
+      color: #ffffff;
+      font-family: sans-serif;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    :root, body.is-fullscreen {
+      background-color: #000000;
+    }
+    [hidden] {
+      display: none !important;
+    }
+    h1 {
+      font-weight: normal;
+    }
+    a {
+      color: inherit;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    #app, #loading, #error, #launch {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: default;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #000000;
+    }
+    #launch {
+      background-color: rgba(0, 0, 0, 0.7);
+      cursor: pointer;
+    }
+    .green-flag {
+      width: 80px;
+      height: 80px;
+      padding: 16px;
+      border-radius: 100%;
+      background: rgba(255, 255, 255, 0.75);
+      border: 3px solid hsla(0, 100%, 100%, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    #loading {
+      
+    }
+    .progress-bar-outer {
+      border: 1px solid currentColor;
+      height: 10px;
+      width: 200px;
+      max-width: 200px;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      width: 0;
+      background-color: currentColor;
+    }
+    .loading-text, noscript {
+      font-weight: normal;
+      font-size: 36px;
+      margin: 0 0 16px;
+    }
+    .loading-image {
+      margin: 0 0 16px;
+    }
+    #error-message, #error-stack {
+      font-family: monospace;
+      max-width: 600px;
+      white-space: pre-wrap;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    #error-stack {
+      text-align: left;
+      max-height: 200px;
+      overflow: auto;
+    }
+    .control-button {
+      width: 2rem;
+      height: 2rem;
+      padding: 0.375rem;
+      border-radius: 0.25rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
+      border: 0;
+      border-radius: 4px;
+    }
+    .control-button:hover {
+      background: #ff4c4c26;
+    }
+    .control-button.active {
+      background: #ff4c4c59;
+    }
+    .fullscreen-button {
+      background: white !important;
+    }
+    .standalone-fullscreen-button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 0 0 0 4px;
+      padding: 4px;
+      cursor: pointer;
+    }
+    .sc-canvas {
+      cursor: auto;
+    }
+    .sc-monitor-root[opcode^="data_"] .sc-monitor-value-color {
+      background-color: #ff8c1a;
+    }
+    .sc-monitor-row-value-outer {
+      background-color: #fc662c;
+    }
+    .sc-monitor-row-value-editing .sc-monitor-row-value-outer {
+      background-color: #e25b27;
+    }
+    
+  </style>
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgdmVyc2lvbj0iMS4xIj48cGF0aCBkPSJNIDE0My42MzAgMTUzLjI1MCBMIDE0My4wMjcgMTU1LjUwMCAxNDMuMDE0IDE1OS43MTIgTCAxNDMgMTYzLjkyNSAxNDEuMDcwIDE2OS4yMTIgTCAxMzkuMTM5IDE3NC41MDAgMTIzLjQ5NSAyMTkuNTAwIEwgMTA3Ljg1MCAyNjQuNTAwIDEwNC45ODUgMjcyLjUwMCBMIDEwMi4xMTkgMjgwLjUwMCA5Mi42NzggMzA3LjUwMCBMIDgzLjIzNiAzMzQuNTAwIDc5LjUwNiAzNDUuMjM2IEwgNzUuNzc2IDM1NS45NzMgNzYuMzY1IDM1Ny41MTAgTCA3Ni45NTUgMzU5LjA0NiA5NC43MjggMzU4Ljc3MyBMIDExMi41MDAgMzU4LjUwMCAxMjEuNDA5IDMzMiBMIDEzMC4zMTcgMzA1LjUwMCAxMzEuNDA5IDMwNC43NTggTCAxMzIuNTAwIDMwNC4wMTcgMTY5IDMwNC4yNTggTCAyMDUuNTAwIDMwNC41MDAgMjExLjE3MSAzMjAuNTAwIEwgMjE2Ljg0MiAzMzYuNTAwIDIyMC42NzUgMzQ3LjUwMCBMIDIyNC41MDkgMzU4LjUwMCAyNDMuOTMyIDM1OC43NzIgTCAyNjMuMzU2IDM1OS4wNDQgMjY0LjIwNCAzNTguMTk2IEwgMjY1LjA1MyAzNTcuMzQ3IDI2MS40NTIgMzQ2LjkyMyBMIDI1Ny44NTIgMzM2LjUwMCAyNTQuMDA2IDMyNiBMIDI1MC4xNjAgMzE1LjUwMCAyNDYuOTk3IDMwNi41MDAgTCAyNDMuODM0IDI5Ny41MDAgMjQxLjQ4MCAyOTEgTCAyMzkuMTI3IDI4NC41MDAgMjI5Ljk4MSAyNTkgTCAyMjAuODM2IDIzMy41MDAgMjE3Ljg0NSAyMjUgTCAyMTQuODU1IDIxNi41MDAgMjEyLjk4MSAyMTEuNTAwIEwgMjExLjEwNyAyMDYuNTAwIDIwMi4xNTggMTgxLjUwMCBMIDE5My4yMTAgMTU2LjUwMCAxOTIuMTMwIDE1My43NTAgTCAxOTEuMDUwIDE1MSAxNjcuNjQxIDE1MSBMIDE0NC4yMzMgMTUxIDE0My42MzAgMTUzLjI1MCBNIDE2NS41NTkgMTkxLjgzMyBMIDE2My42OTAgMTk4LjUwMCAxNTguOTI4IDIxNCBMIDE1NC4xNjUgMjI5LjUwMCAxNDguNTMzIDI0NyBMIDE0Mi45MDEgMjY0LjUwMCAxNDIuMDE3IDI2Ni42NTAgTCAxNDEuMTM0IDI2OC44MDAgMTQxLjczNCAyNjkuNDAwIEwgMTQyLjMzMyAyNzAgMTY4LjY2NyAyNzAgTCAxOTUgMjcwIDE5NSAyNjkuMDE1IEwgMTk1IDI2OC4wMzAgMTkxLjU5NyAyNTcuNzY1IEwgMTg4LjE5NCAyNDcuNTAwIDE4MS4xODMgMjI1LjUwMCBMIDE3NC4xNzIgMjAzLjUwMCAxNzEuODc2IDE5NiBMIDE2OS41ODEgMTg4LjUwMCAxNjguNTA0IDE4Ni44MzMgTCAxNjcuNDI4IDE4NS4xNjYgMTY1LjU1OSAxOTEuODMzIE0gMjczLjY2NyAyMDMuNjY3IEwgMjczIDIwNC4zMzMgMjczIDIwNS42ODEgTCAyNzMgMjA3LjAyOCAyODguODU3IDIzMi4yNjQgTCAzMDQuNzEzIDI1Ny41MDAgMzExLjkyMSAyNjguOTUxIEwgMzE5LjEyOCAyODAuNDAyIDMxOC43MTAgMjgyLjAwMiBMIDMxOC4yOTEgMjgzLjYwMyAzMDcuMzM1IDMwMC41NTEgTCAyOTYuMzc4IDMxNy41MDAgMjgzLjYxOCAzMzcuMjMxIEwgMjcwLjg1OSAzNTYuOTYyIDI3MS40ODggMzU3Ljk4MSBMIDI3Mi4xMTggMzU5IDI5MC40MDQgMzU5IEwgMzA4LjY5MCAzNTkgMzEwLjE4MiAzNTcuMjUwIEwgMzExLjY3NCAzNTUuNTAwIDMxNS42NzkgMzQ4LjUwMCBMIDMxOS42ODQgMzQxLjUwMCAzMzAuOTQ3IDMyMi4yNTAgTCAzNDIuMjEwIDMwMyAzNDIuODY0IDMwMyBMIDM0My41MTkgMzAzIDM0NC42MDQgMzA0Ljc1MCBMIDM0NS42ODkgMzA2LjUwMCAzNTkuOTY0IDMzMS41MDAgTCAzNzQuMjM4IDM1Ni41MDAgMzc1LjgxMCAzNTcuNzUwIEwgMzc3LjM4MiAzNTkgMzk4LjEzMiAzNTkgTCA0MTguODgyIDM1OSA0MTkuNDIzIDM1OC4xMjUgTCA0MTkuOTY0IDM1Ny4yNTAgNDE2Ljc3NSAzNTIuODc1IEwgNDEzLjU4NyAzNDguNTAwIDM5MS4yNjQgMzE0LjUyNCBMIDM2OC45NDEgMjgwLjU0NyAzNjkuMjIyIDI3OS41MjQgTCAzNjkuNTA0IDI3OC41MDAgMzgxLjA2MCAyNjEgTCAzOTIuNjE1IDI0My41MDAgNDA0LjM4NiAyMjQuNjc3IEwgNDE2LjE1OCAyMDUuODU0IDQxNS42MTAgMjA0LjQyNyBMIDQxNS4wNjMgMjAzIDM5Ny43MjMgMjAzIEwgMzgwLjM4MiAyMDMgMzc4LjgzMCAyMDQuMjUwIEwgMzc3LjI3OCAyMDUuNTAwIDM2Mi41NDQgMjMxLjUwMCBMIDM0Ny44MTAgMjU3LjUwMCAzNDcuMDI4IDI1OC4zMjcgTCAzNDYuMjQ2IDI1OS4xNTQgMzQ0LjI4NSAyNTYuMzI3IEwgMzQyLjMyMyAyNTMuNTAwIDMzNy43NTYgMjQ0LjkwMSBMIDMzMy4xODkgMjM2LjMwMSAzMjQuNDcxIDIyMC40MDEgTCAzMTUuNzU0IDIwNC41MDAgMzE0LjYyNyAyMDMuNzY1IEwgMzEzLjUwMCAyMDMuMDMxIDI5My45MTcgMjAzLjAxNSBMIDI3NC4zMzMgMjAzIDI3My42NjcgMjAzLjY2NyIgc3Ryb2tlPSJub25lIiBmaWxsPSIjZmY2ZDMyIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48cGF0aCBkPSJNIDg0IDEuNDkyIEwgNzcuNTAwIDIuNzk1IDcxIDQuOTg4IEwgNjQuNTAwIDcuMTgwIDU3LjU5MCAxMC42NDMgTCA1MC42ODEgMTQuMTA1IDQ1LjA5MCAxNy43NTEgTCAzOS41MDAgMjEuMzk3IDMwLjQzNiAzMC40NDkgTCAyMS4zNzMgMzkuNTAwIDE3LjE0NyA0NiBMIDEyLjkyMiA1Mi41MDAgMTAuMDQzIDU4LjUwMCBMIDcuMTY0IDY0LjUwMCA0Ljk4NyA3MSBMIDIuODA5IDc3LjUwMCAxLjQwNSA4NC44MzggTCAwIDkyLjE3NiAwIDI1Ni4xMzAgTCAwIDQyMC4wODQgMS41ODMgNDI3Ljc5MiBMIDMuMTY2IDQzNS41MDAgNS4xNzEgNDQxLjUwMCBMIDcuMTc3IDQ0Ny41MDAgMTAuMzc5IDQ1NC4wMTUgTCAxMy41ODIgNDYwLjUzMSAxNy40ODkgNDY2LjUxNSBMIDIxLjM5NyA0NzIuNTAwIDMwLjQ0OSA0ODEuNTUxIEwgMzkuNTAwIDQ5MC42MDMgNDUuMDkwIDQ5NC4yNDkgTCA1MC42ODEgNDk3Ljg5NSA1Ny41OTAgNTAxLjM1NyBMIDY0LjUwMCA1MDQuODIwIDcwLjUwMCA1MDYuODI3IEwgNzYuNTAwIDUwOC44MzQgODQuMjA4IDUxMC40MTcgTCA5MS45MTYgNTEyIDI1NiA1MTIgTCA0MjAuMDg0IDUxMiA0MjcuNzkyIDUxMC40MTcgTCA0MzUuNTAwIDUwOC44MzQgNDQxLjUwMCA1MDYuODM1IEwgNDQ3LjUwMCA1MDQuODM2IDQ1My41MDAgNTAxLjk1NyBMIDQ1OS41MDAgNDk5LjA3OCA0NjUuOTU5IDQ5NC44MjQgTCA0NzIuNDE4IDQ5MC41NzAgNDc5LjMzNiA0ODQuMDQ0IEwgNDg2LjI1NCA0NzcuNTE4IDQ5MC40NjAgNDcyLjAwOSBMIDQ5NC42NjcgNDY2LjUwMCA0OTguMTQ1IDQ2MC41MDAgTCA1MDEuNjIzIDQ1NC41MDAgNTA0LjcwMCA0NDcgTCA1MDcuNzc3IDQzOS41MDAgNTA5LjQ4OSA0MzEuNTAwIEwgNTExLjIwMiA0MjMuNTAwIDUxMi4xMDEgNDIxLjc2NCBMIDUxMyA0MjAuMDI3IDUxMyAyNTQuNDU1IEwgNTEzIDg4Ljg4MiA1MTIuMjE0IDg5LjM2OCBMIDUxMS40MjggODkuODUzIDUxMC4xODkgODMuMzIxIEwgNTA4Ljk1MCA3Ni43ODggNTA2Ljg4NyA3MC42NDQgTCA1MDQuODIzIDY0LjUwMCA1MDEuNjIxIDU3Ljk4NSBMIDQ5OC40MTggNTEuNDY5IDQ5NC40NTkgNDUuNDk1IEwgNDkwLjUwMCAzOS41MjAgNDg0IDMyLjU5MyBMIDQ3Ny41MDAgMjUuNjY2IDQ2OS45NzIgMjAuMDYyIEwgNDYyLjQ0NCAxNC40NTggNDU0Ljk3MiAxMC43OTYgTCA0NDcuNTAwIDcuMTM1IDQ0MS41MDAgNS4xNTEgTCA0MzUuNTAwIDMuMTY2IDQyNy43OTIgMS41ODMgTCA0MjAuMDg0IC0wIDI1NS4yOTIgMC4wOTQgTCA5MC41MDAgMC4xODggODQgMS40OTIgTSAwLjQ4OCAyNTYgTCAwLjQ4OCA0MjIuNTAwIDAuNzUwIDMzOS4yNTAgTCAxLjAxMSAyNTYgMC43NTAgMTcyLjc1MCBMIDAuNDg4IDg5LjUwMCAwLjQ4OCAyNTYgTSAxNDMuNjMwIDE1My4yNTAgTCAxNDMuMDI3IDE1NS41MDAgMTQzLjAxNCAxNTkuNzEyIEwgMTQzIDE2My45MjUgMTQxLjA3MCAxNjkuMjEyIEwgMTM5LjEzOSAxNzQuNTAwIDEyMy40OTUgMjE5LjUwMCBMIDEwNy44NTAgMjY0LjUwMCAxMDQuOTg1IDI3Mi41MDAgTCAxMDIuMTE5IDI4MC41MDAgOTIuNjc4IDMwNy41MDAgTCA4My4yMzYgMzM0LjUwMCA3OS41MDYgMzQ1LjIzNiBMIDc1Ljc3NiAzNTUuOTczIDc2LjM2NSAzNTcuNTEwIEwgNzYuOTU1IDM1OS4wNDYgOTQuNzI4IDM1OC43NzMgTCAxMTIuNTAwIDM1OC41MDAgMTIxLjQwOSAzMzIgTCAxMzAuMzE3IDMwNS41MDAgMTMxLjQwOSAzMDQuNzU4IEwgMTMyLjUwMCAzMDQuMDE3IDE2OSAzMDQuMjU4IEwgMjA1LjUwMCAzMDQuNTAwIDIxMS4xNzEgMzIwLjUwMCBMIDIxNi44NDIgMzM2LjUwMCAyMjAuNjc1IDM0Ny41MDAgTCAyMjQuNTA5IDM1OC41MDAgMjQzLjkzMiAzNTguNzcyIEwgMjYzLjM1NiAzNTkuMDQ0IDI2NC4yMDQgMzU4LjE5NiBMIDI2NS4wNTMgMzU3LjM0NyAyNjEuNDUyIDM0Ni45MjMgTCAyNTcuODUyIDMzNi41MDAgMjU0LjAwNiAzMjYgTCAyNTAuMTYwIDMxNS41MDAgMjQ2Ljk5NyAzMDYuNTAwIEwgMjQzLjgzNCAyOTcuNTAwIDI0MS40ODAgMjkxIEwgMjM5LjEyNyAyODQuNTAwIDIyOS45ODEgMjU5IEwgMjIwLjgzNiAyMzMuNTAwIDIxNy44NDUgMjI1IEwgMjE0Ljg1NSAyMTYuNTAwIDIxMi45ODEgMjExLjUwMCBMIDIxMS4xMDcgMjA2LjUwMCAyMDIuMTU4IDE4MS41MDAgTCAxOTMuMjEwIDE1Ni41MDAgMTkyLjEzMCAxNTMuNzUwIEwgMTkxLjA1MCAxNTEgMTY3LjY0MSAxNTEgTCAxNDQuMjMzIDE1MSAxNDMuNjMwIDE1My4yNTAgTSAxNjUuNTU5IDE5MS44MzMgTCAxNjMuNjkwIDE5OC41MDAgMTU4LjkyOCAyMTQgTCAxNTQuMTY1IDIyOS41MDAgMTQ4LjUzMyAyNDcgTCAxNDIuOTAxIDI2NC41MDAgMTQyLjAxNyAyNjYuNjUwIEwgMTQxLjEzNCAyNjguODAwIDE0MS43MzQgMjY5LjQwMCBMIDE0Mi4zMzMgMjcwIDE2OC42NjcgMjcwIEwgMTk1IDI3MCAxOTUgMjY5LjAxNSBMIDE5NSAyNjguMDMwIDE5MS41OTcgMjU3Ljc2NSBMIDE4OC4xOTQgMjQ3LjUwMCAxODEuMTgzIDIyNS41MDAgTCAxNzQuMTcyIDIwMy41MDAgMTcxLjg3NiAxOTYgTCAxNjkuNTgxIDE4OC41MDAgMTY4LjUwNCAxODYuODMzIEwgMTY3LjQyOCAxODUuMTY2IDE2NS41NTkgMTkxLjgzMyBNIDI3My42NjcgMjAzLjY2NyBMIDI3MyAyMDQuMzMzIDI3MyAyMDUuNjgxIEwgMjczIDIwNy4wMjggMjg4Ljg1NyAyMzIuMjY0IEwgMzA0LjcxMyAyNTcuNTAwIDMxMS45MjEgMjY4Ljk1MSBMIDMxOS4xMjggMjgwLjQwMiAzMTguNzEwIDI4Mi4wMDIgTCAzMTguMjkxIDI4My42MDMgMzA3LjMzNSAzMDAuNTUxIEwgMjk2LjM3OCAzMTcuNTAwIDI4My42MTggMzM3LjIzMSBMIDI3MC44NTkgMzU2Ljk2MiAyNzEuNDg4IDM1Ny45ODEgTCAyNzIuMTE4IDM1OSAyOTAuNDA0IDM1OSBMIDMwOC42OTAgMzU5IDMxMC4xODIgMzU3LjI1MCBMIDMxMS42NzQgMzU1LjUwMCAzMTUuNjc5IDM0OC41MDAgTCAzMTkuNjg0IDM0MS41MDAgMzMwLjk0NyAzMjIuMjUwIEwgMzQyLjIxMCAzMDMgMzQyLjg2NCAzMDMgTCAzNDMuNTE5IDMwMyAzNDQuNjA0IDMwNC43NTAgTCAzNDUuNjg5IDMwNi41MDAgMzU5Ljk2NCAzMzEuNTAwIEwgMzc0LjIzOCAzNTYuNTAwIDM3NS44MTAgMzU3Ljc1MCBMIDM3Ny4zODIgMzU5IDM5OC4xMzIgMzU5IEwgNDE4Ljg4MiAzNTkgNDE5LjQyMyAzNTguMTI1IEwgNDE5Ljk2NCAzNTcuMjUwIDQxNi43NzUgMzUyLjg3NSBMIDQxMy41ODcgMzQ4LjUwMCAzOTEuMjY0IDMxNC41MjQgTCAzNjguOTQxIDI4MC41NDcgMzY5LjIyMiAyNzkuNTI0IEwgMzY5LjUwNCAyNzguNTAwIDM4MS4wNjAgMjYxIEwgMzkyLjYxNSAyNDMuNTAwIDQwNC4zODYgMjI0LjY3NyBMIDQxNi4xNTggMjA1Ljg1NCA0MTUuNjEwIDIwNC40MjcgTCA0MTUuMDYzIDIwMyAzOTcuNzIzIDIwMyBMIDM4MC4zODIgMjAzIDM3OC44MzAgMjA0LjI1MCBMIDM3Ny4yNzggMjA1LjUwMCAzNjIuNTQ0IDIzMS41MDAgTCAzNDcuODEwIDI1Ny41MDAgMzQ3LjAyOCAyNTguMzI3IEwgMzQ2LjI0NiAyNTkuMTU0IDM0NC4yODUgMjU2LjMyNyBMIDM0Mi4zMjMgMjUzLjUwMCAzMzcuNzU2IDI0NC45MDEgTCAzMzMuMTg5IDIzNi4zMDEgMzI0LjQ3MSAyMjAuNDAxIEwgMzE1Ljc1NCAyMDQuNTAwIDMxNC42MjcgMjAzLjc2NSBMIDMxMy41MDAgMjAzLjAzMSAyOTMuOTE3IDIwMy4wMTUgTCAyNzQuMzMzIDIwMyAyNzMuNjY3IDIwMy42NjciIHN0cm9rZT0ibm9uZSIgZmlsbD0iIzgwMjUwMCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+">
+</head>
 <body>
-<h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
+  <div id="app"></div>
+
+  <div id="launch" class="screen" hidden title="Click to start">
+    <div class="green-flag">
+      <svg viewBox="0 0 16.63 17.5" width="42" height="44">
+        <defs><style>.cls-1,.cls-2{fill:#4cbf56;stroke:#45993d;stroke-linecap:round;stroke-linejoin:round;}.cls-2{stroke-width:1.5px;}</style></defs>
+        <path class="cls-1" d="M.75,2A6.44,6.44,0,0,1,8.44,2h0a6.44,6.44,0,0,0,7.69,0V12.4a6.44,6.44,0,0,1-7.69,0h0a6.44,6.44,0,0,0-7.69,0"/>
+        <line class="cls-2" x1="0.75" y1="16.75" x2="0.75" y2="0.75"/>
+      </svg>
+    </div>
+  </div>
+
+  <div id="loading" class="screen">
+    <noscript>Enable JavaScript</noscript>
+    
+    
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="loading-inner"></div></div>
+  </div>
+
+  <div id="error" class="screen" hidden>
+    <h1>Error</h1>
+    <details>
+      <summary id="error-message"></summary>
+      <p id="error-stack"></p>
+    </details>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const appElement = document.getElementById('app');
+    const launchScreen = document.getElementById('launch');
+    const loadingScreen = document.getElementById('loading');
+    const loadingInner = document.getElementById('loading-inner');
+    const errorScreen = document.getElementById('error');
+    const errorScreenMessage = document.getElementById('error-message');
+    const errorScreenStack = document.getElementById('error-stack');
+
+    const handleError = (error) => {
+      console.error(error);
+      if (!errorScreen.hidden) return;
+      errorScreen.hidden = false;
+      errorScreenMessage.textContent = '' + error;
+      let debug = error && error.stack || 'no stack';
+      debug += '\nUser agent: ' + navigator.userAgent;
+      errorScreenStack.textContent = debug;
+    };
+    const setProgress = (progress) => {
+      if (loadingInner) loadingInner.style.width = progress * 100 + '%';
+    };
+    const interpolate = (a, b, t) => a + t * (b - a);
+
+    try {
+      setProgress(0.1);
+
+      const scaffolding = new Scaffolding.Scaffolding();
+      scaffolding.width = 480;
+      scaffolding.height = 360;
+      scaffolding.resizeMode = "preserve-ratio";
+      scaffolding.editableLists = false;
+      scaffolding.usePackagedRuntime = true;
+      scaffolding.setup();
+      scaffolding.appendTo(appElement);
+
+      const vm = scaffolding.vm;
+      window.scaffolding = scaffolding;
+      window.vm = scaffolding.vm;
+      window.Scratch = {
+        vm,
+        renderer: vm.renderer,
+        audioEngine: vm.runtime.audioEngine,
+        bitmapAdapter: vm.runtime.v2BitmapAdapter,
+        videoProvider: vm.runtime.ioDevices.video.provider
+      };
+
+      scaffolding.setUsername("player####".replace(/#/g, () => Math.floor(Math.random() * 10)));
+      scaffolding.setAccentColor("#ff4c4c");
+
+      scaffolding.addCloudProvider(new Scaffolding.Cloud.WebSocketProvider(["wss://clouddata.turbowarp.org","wss://clouddata.turbowarp.xyz"], "p4-@AX_scratch (1).sb3"));
+
+      vm.setTurboMode(false);
+      if (vm.setInterpolation) vm.setInterpolation(false);
+      if (vm.setFramerate) vm.setFramerate(30);
+      if (vm.renderer.setUseHighQualityRender) vm.renderer.setUseHighQualityRender(false);
+      if (vm.setRuntimeOptions) vm.setRuntimeOptions({
+        fencing: false,
+        miscLimits: false,
+        maxClones: 9999999999,
+      });
+      if (vm.setCompilerOptions) vm.setCompilerOptions({
+        enabled: true,
+        warpTimer: false
+      });
+
+      if (typeof ScaffoldingAddons !== 'undefined') {
+        ScaffoldingAddons.run(scaffolding, {"gamepad":false,"pointerlock":false,"specialCloudBehaviors":false,"unsafeCloudBehaviors":false,"pause":false});
+      }
+
+      scaffolding.setExtensionSecurityManager({
+        getSandboxMode: 'unsandboxed',
+        canLoadExtensionFromProject: (url) => {
+          handleError(new Error('Missing custom extension: ' + url));
+          return Promise.resolve(false);
+        }
+      });
+      for (const extension of ["data:text/javascript;,(Scratch%20%3D%3E%20%7B%0A%20%20'use%20strict'%3B%0A%0A%20%20const%20icon%20%3D%20'data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB2aWV3Qm94PSIwLDAsMjI1LjM1NDgsMjI1LjM1NDgiIGhlaWdodD0iMjI1LjM1NDgiIHdpZHRoPSIyMjUuMzU0OCIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4xIj48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTI3LjMyMjc0LC02Ny4zMjI2KSI%2BPGcgc3R5bGU9Im1peC1ibGVuZC1tb2RlOiBub3JtYWwiIHN0cm9rZS1kYXNob2Zmc2V0PSIwIiBzdHJva2UtZGFzaGFycmF5PSIiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZT0ibm9uZSIgZmlsbC1ydWxlPSJub256ZXJvIiBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpc1BhaW50aW5nTGF5ZXImcXVvdDs6dHJ1ZX0iPjxwYXRoIHN0cm9rZS13aWR0aD0iMCIgZmlsbD0iIzE0NjYwMCIgZD0iTTEyNy4zMjI3NSwxODBjMCwtNjIuMjMwMDEgNTAuNDQ3MzksLTExMi42Nzc0IDExMi42Nzc0LC0xMTIuNjc3NGM2Mi4yMzAwMSwwIDExMi42Nzc0LDUwLjQ0NzM5IDExMi42Nzc0LDExMi42Nzc0YzAsNjIuMjMwMDEgLTUwLjQ0NzM5LDExMi42Nzc0IC0xMTIuNjc3NCwxMTIuNjc3NGMtNjIuMjMwMDEsMCAtMTEyLjY3NzQsLTUwLjQ0NzM5IC0xMTIuNjc3NCwtMTEyLjY3NzR6Ij48L3BhdGg%2BPGcgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSIjZmZmZmZmIj48cGF0aCBkYXRhLXBhcGVyLWRhdGE9InsmcXVvdDtpbmRleCZxdW90OzpudWxsfSIgZD0iTTI2MS4zNjIzNSwxNDYuNjIzNTlsLTUuMTUwOTcsNS4yNzQ2MmwtMTMuMTg1NTEsLTEyLjIzOTg5bDE5LjIzNjg5LC0xOS40OTU4OWMxMC41OTE0NywtMTAuNTkxNDcgMjcuNzU4NCwtMTAuNTkxNDcgMzguMzQxMTIsMGwxMi43ODAzOCwxMi43ODAzOGMxMC41OTE0NywxMC41ODI3MSAxMC41OTE0NywyNy43NDk2NSAwLDM4LjM0MTEybC0zOC4zNDExMiwzOC4zNDExMmMtMTAuNTkxNDcsMTAuNTg2OTUgLTI3Ljc0OTY1LDEwLjU4Njk1IC0zOC4zNDExMiwwbC0xMi43ODAzNywtMTIuNzgwMzdsLTEyLjY3Mzc4LC0xMy4yMjYxMmwxMi4yNjMwNCwtMTIuNDMzbDI1Ljk3MTQ5LDI1LjY1OTEyYzMuNTIxNzQsMy41MjE3NCA5LjI1ODY0LDMuNTIxNzQgMTIuNzgwMzgsMGwzOC4zNDExMiwtMzguMzQxMTJjMy41MzA0OSwtMy41MzA0OSAzLjUzMDQ5LC05LjI1ODY0IDAsLTEyLjc4MDM4bC0xMi43ODAzNywtMTIuNzgwMzdjLTMuNTIxNzQsLTMuNTIxNzMgLTkuMjQ5ODgsLTMuNTMwNDkgLTEyLjc4MDM4LDBsLTEzLjY4MDc5LDEzLjY4MDc5eiI%2BPC9wYXRoPjxwYXRoIGRhdGEtcGFwZXItZGF0YT0ieyZxdW90O2luZGV4JnF1b3Q7Om51bGx9IiBkPSJNMjE4LjYzNzczLDIxMy4zNzY0bDUuMTUwOTcsLTUuMjc0NjJsMTMuMTg1NTEsMTIuMjM5ODlsLTE5LjIzNjg5LDE5LjQ5NTg5Yy0xMC41OTE0NywxMC41OTE0NyAtMjcuNzU4NCwxMC41OTE0NyAtMzguMzQxMTIsMGwtMTIuNzgwMzgsLTEyLjc4MDM4Yy0xMC41OTE0NywtMTAuNTgyNzEgLTEwLjU5MTQ3LC0yNy43NDk2NSAwLC0zOC4zNDExMWwzOC4zNDExMiwtMzguMzQxMTJjMTAuNTkxNDcsLTEwLjU4Njk1IDI3Ljc0OTY1LC0xMC41ODY5NSAzOC4zNDExMiwwbDEyLjc4MDM3LDEyLjc4MDM3bDEyLjY3Mzc4LDEzLjIyNjEybC0xMi4yNjMwNSwxMi40MzNsLTI1Ljk3MTQ4LC0yNS42NTkxMmMtMy41MjE3NCwtMy41MjE3NCAtOS4yNTg2NCwtMy41MjE3NCAtMTIuNzgwMzgsMGwtMzguMzQxMTIsMzguMzQxMTJjLTMuNTMwNDksMy41MzA0OSAtMy41MzA0OSw5LjI1ODY0IDAsMTIuNzgwMzhsMTIuNzgwMzcsMTIuNzgwMzdjMy41MjE3NCwzLjUyMTczIDkuMjQ5ODgsMy41MzA0OSAxMi43ODAzOCwwbDEzLjY4MDc5LC0xMy42ODA3OXoiPjwvcGF0aD48L2c%2BPC9nPjwvZz48L3N2Zz48IS0tcm90YXRpb25DZW50ZXI6MTEyLjY3NzI1NToxMTIuNjc3NDA1LS0%2B'%3B%0A%0A%20%20const%20fetch_url%20%3D%20(%7BUSER_URL%2C%20BODY%2C%20CONTENT_TYPE%2C%20RESPONSES_TYPES%2C%20SPLIT%7D%2C%20METHOD)%20%3D%3E%20%7B%0A%20%20%20%20SPLIT%20%3D%20String(SPLIT)%3B%0A%20%20%20%20CONTENT_TYPE%20%3D%20Number(CONTENT_TYPE)%3B%0A%20%20%20%20RESPONSES_TYPES%20%3D%20String(RESPONSES_TYPES).split('%20').filter(word%20%3D%3E%20word%20!%3D%3D%20'').length%20%3E%3D%201%20%3F%20String(RESPONSES_TYPES).split('%20').filter(word%20%3D%3E%20word%20!%3D%3D%20'')%20%3A%20%5B'9'%5D%3B%0A%20%20%20%20let%20single%20%3D%20METHOD%20%3D%3D%3D%20'GET'%20%7C%7C%20METHOD%20%3D%3D%3D%20'DELETE'%3B%0A%20%20%20%20return%20Scratch.fetch(String(USER_URL)%2C%20%7B%0A%20%20%20%20%20%20method%3A%20METHOD%2C%0A%20%20%20%20%20%20headers%3A%20single%20%3F%20%7B%7D%20%3A%20%7B'Content-Type'%3A%20CONTENT_TYPE%20%3D%3D%3D%201%20%3F%20'text%2Fplain'%20%3A%20'application%2Fjson'%7D%2C%0A%20%20%20%20%20%20redirect%3A%20single%20%3F%20'follow'%20%3A%20'follow'%2C%0A%20%20%20%20%20%20body%3A%20CONTENT_TYPE%20%3D%3D%3D%201%20%3F%20String(BODY)%20%3A%20JSON.stringify(BODY)%7D)%0A%20%20%20%20.then(res%20%3D%3E%20%7B%0A%20%20%20%20%20%20const%20responses%20%3D%20%5B%5D%3B%0A%20%20%20%20%20%20for%20(let%20i%20%3D%200%3B%20i%20%3C%3D%20RESPONSES_TYPES.length%20-%201%3B%20i%2B%2B)%20%7B%0A%20%20%20%20%20%20%20%20switch%20(Number(RESPONSES_TYPES%5Bi%5D))%20%7B%0A%20%20%20%20%20%20%20%20%20%20case%201%3A%20responses.push(res.text())%3B%20break%3B%0A%20%20%20%20%20%20%20%20%20%20case%202%3A%20responses.push(JSON.stringify(res.json()))%3B%20break%3B%0A%20%20%20%20%20%20%20%20%20%20case%203%3A%20responses.push(String(res.ok))%3B%20break%3B%0A%20%20%20%20%20%20%20%20%20%20case%204%3A%20responses.push(res.status)%3B%20break%3B%0A%20%20%20%20%20%20%20%20%20%20case%205%3A%20responses.push(res.statusText)%3B%20break%3B%0A%20%20%20%20%20%20%20%20%20%20case%206%3A%20responses.push(res.type)%3B%20break%3B%0A%20%20%20%20%20%20%20%20%20%20case%207%3A%20responses.push(String(res.redirected))%3B%20break%3B%0A%20%20%20%20%20%20%20%20%20%20case%208%3A%20responses.push(res.url)%3B%20break%3B%0A%20%20%20%20%20%20%20%20%20%20case%209%3A%20default%3A%20responses.push(single%20%3F%20res.url%20%3A%20String(res.bodyUsed))%3B%20break%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20return%20Promise.all(responses)%3B%0A%20%20%20%20%7D)%0A%20%20%20%20.then(arr%20%3D%3E%20%7B%0A%20%20%20%20%20%20let%20responses%20%3D%20''%3B%0A%20%20%20%20%20%20for%20(let%20i%20%3D%200%3B%20i%20%3C%3D%20RESPONSES_TYPES.length%20-%201%3B%20i%2B%2B)%20%7B%0A%20%20%20%20%20%20%20%20responses%20%2B%3D%20SPLIT%20%2B%20arr%5Bi%5D%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20return%20SPLIT%20%3D%3D%3D%20''%20%3F%20responses%20%3A%20responses.slice(1)%3B%0A%20%20%20%20%7D)%0A%20%20%20%20.catch(err%20%3D%3E%20%7B%0A%20%20%20%20%20%20console.error(err)%3B%0A%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%7D)%3B%0A%20%20%7D%3B%0A%0A%20%20class%20Network%20%7B%0A%0A%20%20%20%20getInfo()%20%7B%0A%20%20%20%20%20%20return%20%7B%0A%0A%20%20%20%20%20%20%20%20id%3A%20'truefantomnetwork'%2C%0A%20%20%20%20%20%20%20%20name%3A%20'Network'%2C%0A%0A%20%20%20%20%20%20%20%20color1%3A%20'%23146600'%2C%0A%20%20%20%20%20%20%20%20color2%3A%20'%23125C00'%2C%0A%20%20%20%20%20%20%20%20color3%3A%20'%23105200'%2C%0A%0A%20%20%20%20%20%20%20%20menuIconURI%3A%20icon%2C%0A%0A%20%20%20%20%20%20%20%20blocks%3A%20%5B%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'connected_to_internet_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.BOOLEAN%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'connected%20to%20internet%3F'%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'browser_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'browser'%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'current_url_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'current%20url'%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'network_type_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'network%20type'%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'network_generation_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'network%20generation'%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'downlink_speed_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'downlink%20speed%20in%20mb%2Fs'%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'downlink_max_speed_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'downlink%20max%20speed%20in%20mb%2Fs'%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'rtt_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'rtt%20in%20ms'%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'get_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'get%20%5BUSER_URL%5D%20respond%20%5BRESPONSES_TYPES%5D%20split%20by%20%5BSPLIT%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20USER_URL%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'https%3A%2F%2Fhttpbin.org%2Fget'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20RESPONSES_TYPES%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'only_url_response_type'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20SPLIT%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'%20'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'delete_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'delete%20%5BUSER_URL%5D%20respond%20%5BRESPONSES_TYPES%5D%20split%20by%20%5BSPLIT%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20USER_URL%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'https%3A%2F%2Fhttpbin.org%2Fdelete'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20RESPONSES_TYPES%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'only_url_response_type'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20SPLIT%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'%20'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'post_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'post%20%5BCONTENT_TYPE%5D%20%5BBODY%5D%20to%20%5BUSER_URL%5D%20respond%20%5BRESPONSES_TYPES%5D%20split%20by%20%5BSPLIT%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20USER_URL%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'https%3A%2F%2Fhttpbin.org%2Fpost'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20BODY%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'apple'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20CONTENT_TYPE%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'content_type'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20RESPONSES_TYPES%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'response_type'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20SPLIT%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'%20'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'put_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'put%20%5BCONTENT_TYPE%5D%20%5BBODY%5D%20to%20%5BUSER_URL%5D%20respond%20%5BRESPONSES_TYPES%5D%20split%20by%20%5BSPLIT%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20USER_URL%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'https%3A%2F%2Fhttpbin.org%2Fput'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20BODY%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'apple'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20CONTENT_TYPE%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'content_type'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20RESPONSES_TYPES%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'response_type'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20SPLIT%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'%20'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'patch_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.REPORTER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'patch%20%5BCONTENT_TYPE%5D%20%5BBODY%5D%20to%20%5BUSER_URL%5D%20respond%20%5BRESPONSES_TYPES%5D%20split%20by%20%5BSPLIT%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20USER_URL%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'https%3A%2F%2Fhttpbin.org%2Fpatch'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20BODY%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'apple'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20CONTENT_TYPE%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'content_type'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20RESPONSES_TYPES%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'response_type'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20SPLIT%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'%20'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20'---'%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'open_link_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.COMMAND%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'open%20%5BUSER_URL%5D%20in%20new%20tab'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20USER_URL%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'https%3A%2F%2Fextensions.turbowarp.org'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'open_window_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.COMMAND%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'open%20%5BUSER_URL%5D%20in%20new%20window%20with%20width%3A%20%5BWIDTH%5D%20height%3A%20%5BHEIGHT%5D%20left%3A%20%5BLEFT%5D%20top%3A%20%5BTOP%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20USER_URL%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'https%3A%2F%2Fextensions.turbowarp.org'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20WIDTH%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'default'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20HEIGHT%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'default'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20LEFT%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'default'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20TOP%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.NUMBER%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20menu%3A%20'default'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20opcode%3A%20'redirect_link_block'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20blockType%3A%20Scratch.BlockType.COMMAND%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'redirect%20this%20tab%20to%20%5BUSER_URL%5D'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20arguments%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20USER_URL%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3A%20Scratch.ArgumentType.STRING%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20defaultValue%3A%20'https%3A%2F%2Fextensions.turbowarp.org'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%5D%2C%0A%0A%20%20%20%20%20%20%20%20menus%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20content_type%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20acceptReporters%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20items%3A%20%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(1)%20text'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'1'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(2)%20json'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'2'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%5D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20only_url_response_type%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20acceptReporters%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20items%3A%20%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(1)%20text'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'1'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(2)%20json'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'2'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(3)%20status%20ok%3F'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'3'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(4)%20status'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'4'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(5)%20status%20text'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'5'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(5%201)%20status%20text%20and%20text'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'5%201'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(6)%20type'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'6'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(6%204)%20type%20and%20status'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'6%204'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(7)%20redirected%3F'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'7'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(8)%20url'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'8'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%5D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20response_type%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20acceptReporters%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20items%3A%20%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(1)%20text'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'1'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(2)%20json'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'2'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(3)%20status%20ok%3F'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'3'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(4)%20status'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'4'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(5)%20status%20text'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'5'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(5%201)%20status%20text%20and%20text'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'5%201'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(6)%20type'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'6'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(6%204)%20type%20and%20status'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'6%204'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(7)%20redirected%3F'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'7'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(8)%20url'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'8'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'(9)%20body%20used%3F'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'9'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%5D%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20default%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20acceptReporters%3A%20true%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20items%3A%20%5B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20text%3A%20'default'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%3A%20'default'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%5D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20connected_to_internet_block()%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20return%20navigator.onLine%3B%0A%20%20%20%20%20%20%7D%20catch%20(err)%20%7B%0A%20%20%20%20%20%20%20%20return%20false%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20browser_block()%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20let%20has%20%3D%20input%20%3D%3E%20navigator.userAgent.includes(input)%3B%0A%20%20%20%20%20%20%20%20if%20(has('Firefox'))%20return%20'firefox'%3B%0A%20%20%20%20%20%20%20%20if%20(has('SamsungBrowser'))%20return%20'samsung%20internet'%3B%0A%20%20%20%20%20%20%20%20if%20((has('Opera')%20%7C%7C%20has('OPR'))%20%26%26%20has('GX'))%20return%20'opera%20gx'%3B%0A%20%20%20%20%20%20%20%20if%20(has('Opera')%20%7C%7C%20has('OPR'))%20return%20'opera'%3B%0A%20%20%20%20%20%20%20%20if%20(has('Trident'))%20return%20'internet%20explorer'%3B%0A%20%20%20%20%20%20%20%20if%20(has('Edge'))%20return%20'legacy'%3B%0A%20%20%20%20%20%20%20%20if%20(has('Edg'))%20return%20'edge'%3B%0A%20%20%20%20%20%20%20%20if%20(has('YaBrowser')%20%7C%7C%20has('YaSearchBrowser'))%20return%20'yandex'%3B%0A%20%20%20%20%20%20%20%20if%20(has('Miui'))%20return%20'mi%20browser'%3B%0A%20%20%20%20%20%20%20%20if%20(has('UBrowser'))%20return%20'uc%20browser'%3B%0A%20%20%20%20%20%20%20%20if%20(has('Chrome'))%20return%20'chromium'%3B%0A%20%20%20%20%20%20%20%20if%20(has('Safari'))%20return%20'safari'%3B%0A%20%20%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%20%20%7D%20catch%20(err)%20%7B%0A%20%20%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20current_url_block()%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20return%20document.URL%20%7C%7C%20''%3B%0A%20%20%20%20%20%20%7D%20catch%20(err)%20%7B%0A%20%20%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20network_type_block()%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20switch%20(navigator.connection.type)%20%7B%0A%20%20%20%20%20%20%20%20%20%20case%20'bluetooth'%3A%20return%20'bluetooth'%3B%0A%20%20%20%20%20%20%20%20%20%20case%20'cellular'%3A%20return%20'cellular'%3B%0A%20%20%20%20%20%20%20%20%20%20case%20'ethernet'%3A%20return%20'ethernet'%3B%0A%20%20%20%20%20%20%20%20%20%20case%20'wifi'%3A%20return%20'wi-fi'%3B%0A%20%20%20%20%20%20%20%20%20%20case%20'wimax'%3A%20return%20'wimax'%3B%0A%20%20%20%20%20%20%20%20%20%20default%3A%20return%20''%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%20catch%20(err)%20%7B%0A%20%20%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20network_generation_block()%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20switch%20(navigator.connection.effectiveType)%20%7B%0A%20%20%20%20%20%20%20%20%20%20case%20'slow-2g'%3A%20case%20'2g'%3A%20return%20'2g'%3B%0A%20%20%20%20%20%20%20%20%20%20case%20'3g'%3A%20return%20'3g'%3B%0A%20%20%20%20%20%20%20%20%20%20case%20'4g'%3A%20return%20'4g'%3B%0A%20%20%20%20%20%20%20%20%20%20default%3A%20return%20''%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%20catch%20(err)%20%7B%0A%20%20%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20downlink_speed_block()%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20return%20navigator.connection.downlink%20%7C%7C%20''%3B%0A%20%20%20%20%20%20%7D%20catch%20(err)%20%7B%0A%20%20%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20downlink_max_speed_block()%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20return%20navigator.connection.downlinkMax%20%7C%7C%20''%3B%0A%20%20%20%20%20%20%7D%20catch%20(err)%20%7B%0A%20%20%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20rtt_block()%20%7B%0A%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20return%20navigator.connection.rtt%20%7C%7C%20''%3B%0A%20%20%20%20%20%20%7D%20catch%20(err)%20%7B%0A%20%20%20%20%20%20%20%20return%20''%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20get_block(args)%20%7B%0A%20%20%20%20%20%20return%20fetch_url(args%2C%20'GET')%3B%0A%20%20%20%20%7D%0A%20%20%20%20delete_block(args)%20%7B%0A%20%20%20%20%20%20return%20fetch_url(args%2C%20'DELETE')%3B%0A%20%20%20%20%7D%0A%20%20%20%20post_block(args)%20%7B%0A%20%20%20%20%20%20return%20fetch_url(args%2C%20'POST')%3B%0A%20%20%20%20%7D%0A%20%20%20%20put_block(args)%20%7B%0A%20%20%20%20%20%20return%20fetch_url(args%2C%20'PUT')%3B%0A%20%20%20%20%7D%0A%20%20%20%20patch_block(args)%20%7B%0A%20%20%20%20%20%20return%20fetch_url(args%2C%20'PATCH')%3B%0A%20%20%20%20%7D%0A%20%20%20%20open_link_block(%7BUSER_URL%7D)%20%7B%0A%20%20%20%20%20%20Scratch.openWindow(USER_URL)%3B%0A%20%20%20%20%7D%0A%20%20%20%20open_window_block(%7BUSER_URL%2CWIDTH%2CHEIGHT%2CLEFT%2CTOP%7D)%20%7B%0A%20%20%20%20%20%20let%20params%20%3D%20'popup%3D1'%3B%0A%20%20%20%20%20%20params%20%2B%3D%20isNaN(WIDTH)%20%3F%20''%20%3A%20%60%2Cwidth%3D%24%7BNumber(WIDTH)%20%3C%20100%20%3F%20100%20%3A%20Number(WIDTH)%20%3E%20window.screen.width%20%3F%20window.screen.width%20%3A%20Number(WIDTH)%7D%60%3B%0A%20%20%20%20%20%20params%20%2B%3D%20isNaN(HEIGHT)%20%3F%20''%20%3A%20%60%2Cheight%3D%24%7BNumber(HEIGHT)%20%3C%20100%20%3F%20100%20%3A%20Number(HEIGHT)%20%3E%20window.screen.height%20%3F%20window.screen.height%20%3A%20Number(HEIGHT)%7D%60%3B%0A%20%20%20%20%20%20params%20%2B%3D%20isNaN(LEFT)%20%3F%20''%20%3A%20%60%2Cleft%3D%24%7BNumber(LEFT)%20%3C%200%20%3F%200%20%3A%20Number(LEFT)%20%3E%20window.screen.width%20%3F%20window.screen.width%20%3A%20Number(LEFT)%7D%60%3B%0A%20%20%20%20%20%20params%20%2B%3D%20isNaN(TOP)%20%3F%20''%20%3A%20%60%2Ctop%3D%24%7BNumber(TOP)%20%3C%200%20%3F%200%20%3A%20Number(TOP)%20%3E%20window.screen.height%20%3F%20window.screen.height%20%3A%20Number(TOP)%7D%60%3B%0A%20%20%20%20%20%20Scratch.openWindow(String(USER_URL)%2C%20params)%3B%0A%20%20%20%20%7D%0A%20%20%20%20redirect_link_block(%7BUSER_URL%7D)%20%7B%0A%20%20%20%20%20%20Scratch.redirect(USER_URL)%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%0A%20%20Scratch.extensions.register(new%20Network())%3B%0A%7D)(Scratch)%3B%0A"]) {
+        vm.extensionManager.loadExtensionURL(extension);
+      }
+
+    } catch (e) {
+      handleError(e);
+    }
+  </script>
+  
+  
+    <script>
+      const getProjectData = (function() {
+        const storage = scaffolding.storage;
+        storage.onprogress = (total, loaded) => {
+          setProgress(interpolate(0.2, 0.98, loaded / total));
+        };
+        
+        storage.addWebStore(
+          [storage.AssetType.ImageVector, storage.AssetType.ImageBitmap, storage.AssetType.Sound],
+          (asset) => new URL('./assets/' + asset.assetId + '.' + asset.dataFormat, location).href
+        );
+        return () => new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = () => {
+          resolve(xhr.response);
+        };
+        xhr.onerror = () => {
+          if (location.protocol === 'file:') {
+            reject(new Error('Zip environment must be used from a website, not from a file URL.'));
+          } else {
+            reject(new Error('Request to load project data failed.'));
+          }
+        };
+        xhr.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setProgress(interpolate(0.1, 0.2, e.loaded / e.total));
+          }
+        };
+        xhr.responseType = 'arraybuffer';
+        xhr.open('GET', "./assets/project.json");
+        xhr.send();
+      });
+      })();
+    </script>
+  <script>
+    const run = async () => {
+      const projectData = await getProjectData();
+      await scaffolding.loadProject(projectData);
+      setProgress(1);
+      loadingScreen.hidden = true;
+      if (true) {
+        scaffolding.start();
+      } else {
+        launchScreen.hidden = false;
+        launchScreen.addEventListener('click', () => {
+          launchScreen.hidden = true;
+          scaffolding.start();
+        });
+        launchScreen.focus();
+      }
+    };
+    run().catch(handleError);
+  </script>
 </body>
 </html>
