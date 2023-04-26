@@ -1,124 +1,89 @@
-[{
-    "opcode": "get_account",
-    "type": "reporter",
-    "message0": "Get account with ID %s",
-    "args0": [
-        {
-            "type": "input_value",
-            "name": "ACCOUNT_ID",
-            "check": "Number"
-        }
-    ],
-    "output": "JSON",
-    "colour": 230
-},
-{
-    "opcode": "get_level",
-    "type": "reporter",
-    "message0": "Get level with ID %s",
-    "args0": [
-        {
-            "type": "input_value",
-            "name": "LEVEL_ID",
-            "check": "Number"
-        }
-    ],
-    "output": "JSON",
-    "colour": 230
-},
-{
-    "opcode": "get_level_comments",
-    "type": "reporter",
-    "message0": "Get comments of level %s page %s",
-    "args0": [
-        {
-            "type": "input_value",
-            "name": "LEVEL_ID",
-            "check": "Number"
-        },
-        {
-            "type": "input_value",
-            "name": "PAGE",
-            "check": "Number"
-        }
-    ],
-    "output": "JSON",
-    "colour": 230
-},
-{
-    "opcode": "get_leaderboard",
-    "type": "reporter",
-    "message0": "Get leaderboard of level %s mode %m.leaderboard_modes",
-    "args0": [
-        {
-            "type": "input_value",
-            "name": "LEVEL_ID",
-            "check": "Number"
-        },
-        {
-            "type": "field_dropdown",
-            "name": "LEADERBOARD_MODE",
-            "options": [
-                [
-                    "Top",
-                    "top"
-                ],
-                [
-                    "Creator",
-                    "creators"
-                ]
-            ]
-        }
-    ],
-    "output": "JSON",
-    "colour": 230
-},
-{
-    "opcode": "is_server_online",
-    "type": "Boolean",
-    "message0": "Server online?",
-    "output": "Boolean",
-    "colour": 230
-},
-{
-    "opcode": "is_level_deleted",
-    "type": "Boolean",
-    "message0": "Level with ID %s deleted?",
-    "args0": [
-        {
-            "type": "input_value",
-            "name": "LEVEL_ID",
-            "check": "Number"
-        }
-    ],
-    "output": "Boolean",
-    "colour": 230
-},
-{
-    "opcode": "get_deleted_level",
-    "type": "reporter",
-    "message0": "Get deleted level with ID %s",
-    "args0": [
-        {
-            "type": "input_value",
-            "name": "LEVEL_ID",
-            "check": "Number"
-        }
-    ],
-    "output": "JSON",
-    "colour": 230
-},
-{
-    "opcode": "set_database",
-    "type": "command",
-    "message0": "Set database to %s",
-    "args0": [
-        {
-            "type": "field_input",
-            "name": "DATABASE",
-            "text": "https://boomlings.com/database/"
-        }
-    ],
-    "colour": 230
-}]
+(function (ext) {
 
+    // Default database server
+    var databaseUrl = "https://boomlings.com/database/";
+
+    // Constants for endpoints
+    var LEVEL_ENDPOINT = "getGJLevels21.php";
+    var ACCOUNT_ENDPOINT = "getGJUserInfo20.php";
+    var COMMENT_ENDPOINT = "getGJComments21.php";
+    var SEARCH_ENDPOINT = "getGJLevels21.php";
+
+    // Constants for modes
+    var LEVEL_MODE = 0;
+    var ACCOUNT_MODE = 1;
+    var COMMENT_MODE = 2;
+
+    // Constants for leaderboard types
+    var FRIENDS_LEADERBOARD = 0;
+    var GLOBAL_LEADERBOARD = 1;
+
+    // Constants for demon difficulties
+    var DEMON_DIFFICULTIES = [
+        "Easy",
+        "Medium",
+        "Insane",
+        "Hard",
+        "Harder",
+        "Extreme",
+        "Demon",
+        "Auto"
+    ];
+
+    // Constants for reward types
+    var REWARD_TYPES = [
+        "Stars",
+        "Diamonds",
+        "Shards",
+        "Orbs",
+        "Coins",
+        "User Coins",
+        "Demons",
+        "Creator Points"
+    ];
+
+    // Boolean for checking if the database is online
+    var isDatabaseOnline = false;
+
+    // Array to store all fetched levels
+    var fetchedLevels = [];
+
+    // Block and block menu descriptions
+    var descriptor = {
+        blocks: [
+            // Block to set the database URL
+            [" ", "set database URL to %s", "setDatabaseUrl", databaseUrl],
+
+            // Block to check if the database is online
+            ["b", "database online?", "isDatabaseOnline"],
+
+            // Blocks to fetch levels
+            ["R", "fetch levels with %m.searchType %s %m.orderType %m.demonFilter %m.songFilter page %n", "fetchLevels", "keyword", "", "newest", "all", "all", 0],
+            ["R", "level %m.levelInfo of level ID %n", "getLevelInfo", "name", 0],
+
+            // Blocks to fetch accounts
+            ["R", "fetch account with ID %n", "fetchAccount", 0],
+            ["R", "account %m.accountInfo of current account", "getAccountInfo", "name"],
+
+            // Blocks to fetch comments
+            ["R", "fetch comments of level ID %n page %n", "fetchComments", 0, 0],
+            ["R", "comment %m.commentInfo of comment ID %n", "getCommentInfo", "content", 0],
+
+            // Blocks to fetch leaderboard
+            ["R", "fetch %m.leaderboardType leaderboard of level ID %n", "fetchLeaderboard", "global", 0],
+
+            // Block to check if a level is deleted
+            ["b", "level with ID %n deleted?", "isLevelDeleted", 0],
+
+            // Block to fetch a deleted level
+            ["R", "fetch deleted level with ID %n", "fetchDeletedLevel", 0],
+
+            // Block to get demon difficulty name
+            ["r", "demon difficulty %m.demonDifficulty", "getDemonDifficultyName", "Easy"],
+
+            // Block to get reward type name
+            ["r", "reward type %m.rewardType", "getRewardTypeName", "Stars"]
+        ],
+        menus: {
+            searchType: ["keyword", "user", "song"],
+            orderType: ["newest", "rating", "downloads", "featured", "recent
