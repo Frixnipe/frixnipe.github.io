@@ -107,3 +107,8 @@
             // Block to check if a level is deleted
             ["b", "level with ID %n deleted?", "is_level_deleted", 66250232],
         ]
+    };
+
+    // Register the extension
+    ScratchExtensions.register("Geometry Dash", descriptor, ext);
+})({});
