@@ -83,28 +83,38 @@ ext._getStatus = function() {
         });
     };
 
+ext.check_value = function(property, type, id, callback) {
+  var response = {};
+  if (type == "level") {
+    get_level_info(id, function(data) {
+      var levelData = JSON.parse(data)[0];
+      response["name"] = levelData[2];
+      callback(response[property]);
+    });
+  }
+};
+
     // Block and block menu descriptions
 var descriptor = {
-    blocks: [
-        // Existing blocks
-        [" ", "set database to %s", "set_database", "https://boomlings.com/database/"],
-        ["b", "is server online", "is_server_online"],
-        ["R", "get info of level ID %n", "get_level_info", 66250232],
-        ["R", "fetch account with ID %n", "get_account_info", 14253397],
-        ["R", "fetch comments of level with ID %n page %n", "get_level_comments", 66250232, 2],
-        ["R", "fetch global leaderboard", "get_leaderboard"],
-        ["b", "level with ID %n deleted?", "is_level_deleted", 66250232],
-
-        // New custom block
-        ["R", "check value of %m.property in %m.type with ID %n", "check_value", "name", "level", 66250232],
-    ],
-    menus: {
-        type: ["level", "account", "comment", "score"],
-        property: {
-            level: ["name", "description", "author", "difficulty", "downloads", "likes", "length", "coins", "verified", "song"],
-            account: ["username", "playerID", "stars", "demons", "diamonds", "CP", "accountID", "rank", "icon", "color1", "color2"],
-            comment: ["text", "authorID", "likes", "percent", "date"],
-            score: ["username", "playerID", "stars", "demons", "diamonds", "CP", "rank", "icon", "color1", "color2"],
-        },
+  blocks: [
+    // Existing blocks
+    [" ", "set database to %s", "set_database", "https://boomlings.com/database/"],
+    ["b", "is server online", "is_server_online"],
+    ["R", "get info of level ID %n", "get_level_info", 66250232],
+    ["R", "fetch account with ID %n", "get_account_info", 14253397],
+    ["R", "fetch comments of level with ID %n page %n", "get_level_comments", 66250232, 2],
+    ["R", "fetch global leaderboard", "get_leaderboard"],
+    ["b", "level with ID %n deleted?", "is_level_deleted", 66250232],
+    // New custom block
+    ["R", "check value of %m.property in %m.type with ID %n", "check_value", "name", "level", 66250232],
+  ],
+  menus: {
+    type: ["level", "account", "comment", "score"],
+    property: {
+      level: ["name", "description", "author", "difficulty", "downloads", "likes", "length", "coins", "verified", "song"],
+      account: ["username", "playerID", "stars", "demons", "diamonds", "CP", "accountID", "rank", "icon", "color1", "color2"],
+      comment: ["text", "authorID", "likes", "percent", "date"],
+      score: ["username", "playerID", "stars", "demons", "diamonds", "CP", "rank", "icon", "color1", "color2"],
     },
+  },
 };
