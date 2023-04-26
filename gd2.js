@@ -104,4 +104,10 @@ var descriptor = {
       score: ["username", "playerID", "stars", "demons", "diamonds", "CP", "rank", "icon", "color1", "color2"],
     },
   },
+  ScratchExtensions.register('Geometry Dash Extension', descriptor, function(err) {
+if (err) {
+console.log('Error loading Geometry Dash extension:', err);
+}
+});
+ ),
 };
