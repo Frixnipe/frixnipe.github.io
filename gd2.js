@@ -107,4 +107,4 @@
     // Register the extension
     ScratchExtensions.register("AI Extension", descriptor, ext);
 }
-})
+)
