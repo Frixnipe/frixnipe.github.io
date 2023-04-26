@@ -84,32 +84,27 @@ ext._getStatus = function() {
     };
 
     // Block and block menu descriptions
-    var descriptor = {
-        blocks: [
-            // Block to set the database URL
-            [" ", "set database to %s", "set_database", "https://boomlings.com/database/"],
+var descriptor = {
+    blocks: [
+        // Existing blocks
+        [" ", "set database to %s", "set_database", "https://boomlings.com/database/"],
+        ["b", "is server online", "is_server_online"],
+        ["R", "get info of level ID %n", "get_level_info", 66250232],
+        ["R", "fetch account with ID %n", "get_account_info", 14253397],
+        ["R", "fetch comments of level with ID %n page %n", "get_level_comments", 66250232, 2],
+        ["R", "fetch global leaderboard", "get_leaderboard"],
+        ["b", "level with ID %n deleted?", "is_level_deleted", 66250232],
 
-            // Block to check if the database is online
-            ["b", "is_server_online", "server URL"],
-
-            // Block to get level info
-            ["R", "get info of level ID %n", "get_level_info", 66250232],
-
-            // Block to fetch accounts
-            ["R", "fetch account with ID %n", "get_account_info", 14253397],
-
-            // Block to fetch comments
-            ["R", "fetch comments of level with ID %n page %n", "get_level_comments", 66250232, 2],
-
-            // Block to fetch leaderboard
-            ["R", "fetch global leaderboard", "get_leaderboard"],
-
-            // Block to check if a level is deleted
-            ["b", "level with ID %n deleted?", "is_level_deleted", 66250232],
-        ]
-	};
-
-    // Register the extension
-    ScratchExtensions.register("AI Extension", descriptor, ext);
-}
-)
+        // New custom block
+        ["R", "check value of %m.property in %m.type %n", "check_value", "level", "info", 66250232],
+    ],
+    menus: {
+        type: ["level", "account", "comment", "score"],
+        property: {
+            level: ["name", "description", "author", "difficulty", "downloads", "likes", "length", "coins", "verified", "song"],
+            account: ["username", "playerID", "stars", "demons", "diamonds", "CP", "accountID", "rank", "icon", "color1", "color2"],
+            comment: ["text", "authorID", "likes", "percent", "date"],
+            score: ["username", "playerID", "stars", "demons", "diamonds", "CP", "rank", "icon", "color1", "color2"],
+        },
+    },
+};
