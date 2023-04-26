@@ -4,6 +4,11 @@
     var online = false;
     var level_deleted = false;
 
+ext._getStatus = function() {
+    return {status: 2, msg: 'Ready'};
+};
+
+
     function get_request(action, parameter, callback) {
         xmlhttp.onreadystatechange = function() {
             if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
