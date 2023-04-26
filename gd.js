@@ -1,88 +1,84 @@
-(function (ext) {
-  const baseUrl = 'https://boomlings.com/database/';
-  let online = false;
+(function(ext) {
+    var xmlhttp = new XMLHttpRequest();
+    var database = "https://boomlings.com/database/";
+    var online = false;
+    var level_deleted = false;
 
-  ext._getStatus = function () {
-    if (online) {
-      return { status: 2, msg: 'Server online' };
-    } else {
-      return { status: 1, msg: 'Server offline' };
-    }
-  };
-
-  ext.setDatabase = function (databaseUrl) {
-    if (databaseUrl === '') {
-      databaseUrl = baseUrl;
-    }
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', databaseUrl + 'getGJLevels21.php', true);
-    xhr.send();
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState == 4 && xhr.status == 200) {
-        online = true;
-      } else {
-        online = false;
-      }
-    };
-  };
-
-  ext.getLevelData = function (id, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', baseUrl + 'downloadGJLevel22.php', true);
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.send(`gameVersion=21&binaryVersion=35&gdw=0&levelID=${id}&inc=1&extras=0&secret=Wmfd2893gb7`);
-
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState == 4 && xhr.status == 200) {
-        const response = xhr.responseText.split('#')[0].split(':');
-        const levelData = {
-          name: response[2],
-          id: parseInt(response[1]),
-          description: response[3],
-          version: parseInt(response[5]),
-          creatorName: response[6],
-          difficulty: parseInt(response[9]),
-          downloads: parseInt(response[10]),
-          officialSong: parseInt(response[12]),
-          customSong: parseInt(response[13]),
-          likes: parseInt(response[14]),
-          length: parseInt(response[15]),
-          stars: parseInt(response[18]),
-          coins: parseInt(response[19]),
-          verified: parseInt(response[20]) === 1,
-          epic: parseInt(response[21]) === 1,
-          featured: parseInt(response[31]) === 1,
-          rating: parseFloat(response[37]),
-          objectCount: parseInt(response[38]),
-          objectCount2: parseInt(response[39]),
+    function get_request(action, parameter, callback) {
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                callback(xmlhttp.responseText);
+            }
         };
-        callback(levelData);
-      }
+        xmlhttp.open("POST", database + action + ".php", true);
+        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xmlhttp.send(parameter);
+    }
+
+    function get_level_info(id, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&id=" + id;
+        get_request("getGJLevels21", str, callback);
+    }
+
+    function get_account_info(id, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&targetAccountID=" + id;
+        get_request("getGJUserInfo20", str, callback);
+    }
+
+    function get_level_comments(id, page, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&page=" + page + "&total=0&count=9999&mode=0&levelID=" + id + "&secret=Wmfd2893gb7";
+        get_request("getGJComments21", str, callback);
+    }
+
+    function get_leaderboard(id, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&levelID=" + id + "&type=0&str=&diff=-&count=100&secret=Wmfd2893gb7";
+        get_request("getGJScores21", str, callback);
+    }
+
+    ext.set_database = function(link) {
+        database = link;
     };
-  };
 
-  ext.getAccountData = function (id, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', baseUrl + 'getGJUserInfo20.php', true);
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.send(`gameVersion=21&binaryVersion=35&gdw=0&accountID=${id}&gjp=${gjp}&getExt=1`);
+    ext.get_level_info = function(id, callback) {
+        get_level_info(id, callback);
+    };
 
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState == 4 && xhr.status == 200) {
-        const response = xhr.responseText.split(':');
-        const accountData = {
-          userName: response[1],
-          userID: parseInt(response[2]),
-          stars: parseInt(response[3]),
-          diamonds: parseInt(response[4]),
-          coins: parseInt(response[13]),
-          userCoins: parseInt(response[17]),
-          demons: parseInt(response[8]),
-          cp: parseInt(response[11]),
-          accountType: parseInt(response[18]),
-          friendRequests: parseInt(response[19]),
-          messages: parseInt(response[20]),
-          commentHistory: parseInt(response[21]),
-          moderator: parseInt(response[48]) === 1,
-          youtube: response[50] === '1',
-       
+    ext.get_account_info = function(id, callback) {
+        get_account_info(id, callback);
+    };
+
+    ext.get_level_comments = function(id, page, callback) {
+        get_level_comments(id, page, callback);
+    };
+
+    ext.get_leaderboard = function(id, callback) {
+        get_leaderboard(id, callback);
+    };
+
+    ext.is_server_online = function(callback) {
+        get_request("getGJUserData20", "gameVersion=21&binaryVersion=35&gdw=0&accountID=1", function(response) {
+            if (response.indexOf("<body>") == -1) {
+                online = true;
+            } else {
+                online = false;
+            }
+            callback(online);
+        });
+    };
+
+    ext.is_level_deleted = function(id, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&levelID=" + id;
+        get_request("downloadGJLevel22", str, function(response) {
+            if (response == -1) {
+                level_deleted = true;
+            } else {
+                level_deleted = false;
+            }
+            callback(level_deleted);
+        });
+    };
+
+    var descriptor = {
+        blocks: [
+            [" ", "set database to %s", "set_database", "https://boomlings.com/database/"],
+            ["R", "
