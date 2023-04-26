@@ -83,17 +83,6 @@ ext._getStatus = function() {
         });
     };
 
-ext.check_value = function(property, type, id, callback) {
-  var response = {};
-  if (type == "level") {
-    get_level_info(id, function(data) {
-      var levelData = JSON.parse(data)[0];
-      response["name"] = levelData[2];
-      callback(response[property][0]);
-    });
-  }
-};
-
     // Block and block menu descriptions
 var descriptor = {
   blocks: [
@@ -105,8 +94,6 @@ var descriptor = {
     ["R", "fetch comments of level with ID %n page %n", "get_level_comments", 66250232, 2],
     ["R", "fetch global leaderboard", "get_leaderboard"],
     ["b", "level with ID %n deleted?", "is_level_deleted", 66250232],
-    // New custom block
-    ["R", "check value of %m.property in %m.type with ID %n", "check_value", "name", "level", 66250232],
   ],
   menus: {
     type: ["level", "account", "comment", "score"],
