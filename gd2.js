@@ -1,89 +1,109 @@
-(function (ext) {
+(function(ext) {
+    var xmlhttp = new XMLHttpRequest();
+    var database = "https://boomlings.com/database/";
+    var online = false;
+    var level_deleted = false;
 
-    // Default database server
-    var databaseUrl = "https://boomlings.com/database/";
+    function get_request(action, parameter, callback) {
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                callback(xmlhttp.responseText);
+            }
+        };
+        xmlhttp.open("POST", database + action + ".php", true);
+        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xmlhttp.send(parameter);
+    }
 
-    // Constants for endpoints
-    var LEVEL_ENDPOINT = "getGJLevels21.php";
-    var ACCOUNT_ENDPOINT = "getGJUserInfo20.php";
-    var COMMENT_ENDPOINT = "getGJComments21.php";
-    var SEARCH_ENDPOINT = "getGJLevels21.php";
+    function get_level_info(id, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&id=" + id;
+        get_request("getGJLevels21", str, callback);
+    }
 
-    // Constants for modes
-    var LEVEL_MODE = 0;
-    var ACCOUNT_MODE = 1;
-    var COMMENT_MODE = 2;
+    function get_account_info(id, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&targetAccountID=" + id;
+        get_request("getGJUserInfo20", str, callback);
+    }
 
-    // Constants for leaderboard types
-    var FRIENDS_LEADERBOARD = 0;
-    var GLOBAL_LEADERBOARD = 1;
+    function get_level_comments(id, page, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&page=" + page + "&total=0&count=9999&mode=0&levelID=" + id + "&secret=Wmfd2893gb7";
+        get_request("getGJComments21", str, callback);
+    }
 
-    // Constants for demon difficulties
-    var DEMON_DIFFICULTIES = [
-        "Easy",
-        "Medium",
-        "Insane",
-        "Hard",
-        "Harder",
-        "Extreme",
-        "Demon",
-        "Auto"
-    ];
+    function get_leaderboard(id, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&levelID=" + id + "&type=0&str=&diff=-&count=100&secret=Wmfd2893gb7";
+        get_request("getGJScores21", str, callback);
+    }
 
-    // Constants for reward types
-    var REWARD_TYPES = [
-        "Stars",
-        "Diamonds",
-        "Shards",
-        "Orbs",
-        "Coins",
-        "User Coins",
-        "Demons",
-        "Creator Points"
-    ];
+    ext.set_database = function(link) {
+        database = link;
+    };
 
-    // Boolean for checking if the database is online
-    var isDatabaseOnline = false;
+    ext.get_level_info = function(id, callback) {
+        get_level_info(id, callback);
+    };
 
-    // Array to store all fetched levels
-    var fetchedLevels = [];
+    ext.get_account_info = function(id, callback) {
+        get_account_info(id, callback);
+    };
+
+    ext.get_level_comments = function(id, page, callback) {
+        get_level_comments(id, page, callback);
+    };
+
+    ext.get_leaderboard = function(id, callback) {
+        get_leaderboard(id, callback);
+    };
+
+    ext.is_server_online = function(callback) {
+        get_request("getGJUserData20", "gameVersion=21&binaryVersion=35&gdw=0&accountID=1", function(response) {
+            if (response.indexOf("<body>") == -1) {
+                online = true;
+            } else {
+                online = false;
+            }
+            callback(online);
+        });
+    };
+
+    ext.is_level_deleted = function(id, callback) {
+        var str = "gameVersion=21&binaryVersion=35&gdw=0&levelID=" + id;
+        get_request("downloadGJLevel22", str, function(response) {
+            if (response == -1) {
+                level_deleted = true;
+            } else {
+                level_deleted = false;
+            }
+            callback(level_deleted);
+        });
+    };
+
+    var descriptor = {
+        blocks: [
+            [" ", "set database to %s", "set_database", "https://boomlings.com/database/"],
+            ["R", "
 
     // Block and block menu descriptions
     var descriptor = {
         blocks: [
             // Block to set the database URL
-            [" ", "set database URL to %s", "setDatabaseUrl", databaseUrl],
+            [" ", "set database to %s", "set_database", "https://boomlings.com/database/"],
 
             // Block to check if the database is online
-            ["b", "database online?", "isDatabaseOnline"],
+            ["b", "is_server_online", "server URL"],
 
-            // Blocks to fetch levels
-            ["R", "fetch levels with %m.searchType %s %m.orderType %m.demonFilter %m.songFilter page %n", "fetchLevels", "keyword", "", "newest", "all", "all", 0],
-            ["R", "level %m.levelInfo of level ID %n", "getLevelInfo", "name", 0],
+            // Block to get level info
+            ["R", "get info of level ID %n", "get_level_info", 66250232],
 
-            // Blocks to fetch accounts
-            ["R", "fetch account with ID %n", "fetchAccount", 0],
-            ["R", "account %m.accountInfo of current account", "getAccountInfo", "name"],
+            // Block to fetch accounts
+            ["R", "fetch account with ID %n", "get_account_info", 14253397],
 
-            // Blocks to fetch comments
-            ["R", "fetch comments of level ID %n page %n", "fetchComments", 0, 0],
-            ["R", "comment %m.commentInfo of comment ID %n", "getCommentInfo", "content", 0],
+            // Block to fetch comments
+            ["R", "fetch comments of level with ID %n page %n", "get_level_comments", 66250232, 2],
 
-            // Blocks to fetch leaderboard
-            ["R", "fetch %m.leaderboardType leaderboard of level ID %n", "fetchLeaderboard", "global", 0],
+            // Block to fetch leaderboard
+            ["R", "fetch global leaderboard", "get_leaderboard"],
 
             // Block to check if a level is deleted
-            ["b", "level with ID %n deleted?", "isLevelDeleted", 0],
-
-            // Block to fetch a deleted level
-            ["R", "fetch deleted level with ID %n", "fetchDeletedLevel", 0],
-
-            // Block to get demon difficulty name
-            ["r", "demon difficulty %m.demonDifficulty", "getDemonDifficultyName", "Easy"],
-
-            // Block to get reward type name
-            ["r", "reward type %m.rewardType", "getRewardTypeName", "Stars"]
-        ],
-        menus: {
-            searchType: ["keyword", "user", "song"],
-            orderType: ["newest", "rating", "downloads", "featured", "recent
+            ["b", "level with ID %n deleted?", "is_level_deleted", 66250232],
+        ]
