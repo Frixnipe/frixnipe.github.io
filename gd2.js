@@ -96,7 +96,7 @@ var descriptor = {
         ["b", "level with ID %n deleted?", "is_level_deleted", 66250232],
 
         // New custom block
-        ["R", "check value of %m.property in %m.type %n", "check_value", "level", "info", 66250232],
+        ["R", "check value of %m.property in %m.type with ID %n", "check_value", "name", "level", 66250232],
     ],
     menus: {
         type: ["level", "account", "comment", "score"],
