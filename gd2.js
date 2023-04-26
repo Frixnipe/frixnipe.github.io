@@ -78,11 +78,6 @@
         });
     };
 
-    var descriptor = {
-        blocks: [
-            [" ", "set database to %s", "set_database", "https://boomlings.com/database/"],
-            ["R", "
-
     // Block and block menu descriptions
     var descriptor = {
         blocks: [
