@@ -89,7 +89,7 @@ ext.check_value = function(property, type, id, callback) {
     get_level_info(id, function(data) {
       var levelData = JSON.parse(data)[0];
       response["name"] = levelData[2];
-      callback(response[property]);
+      callback(response[property][0]);
     });
   }
 };
