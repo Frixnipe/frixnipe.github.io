@@ -1,7 +1,7 @@
 (function(ext) {
 
     // Define your API credentials here
-    const openaiApiKey = "{{ secrets.OPENAI_API_KEY }}";
+    const openaiApiKey = process.env.OPENAI_API_KEY;
 
     // Define your custom block here
     ext.generateText = function(prompt, callback) {
@@ -23,13 +23,14 @@
     };
 
     // Describe your custom block here
-var descriptor = {
-    blocks: [
-        ["R", "Generate text from prompt %s", "generateText", "Explain quantum computing in simple terms"]
-    ]
-};
-
+    var descriptor = {
+        blocks: [
+            ["R", "Generate text from prompt %s", "generateText", "Explain quantum computing in simple terms"]
+        ],
+        menus: {},
+        url: "https://www.example.com/"
+    };
 
     // Register the extension
     ScratchExtensions.register("AI Extension", descriptor, ext);
-})();
+})({});
