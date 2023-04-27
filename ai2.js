@@ -1,7 +1,7 @@
 (function(ext) {
 
     // Define your API credentials here
-    const openaiApiKey = process.env.OPENAI_API_KEY;
+    const openaiApiKey = "{{ secrets.OPENAI_API_KEY }}";
 
     // Define your custom block here
     ext.generateText = function(prompt, callback) {
@@ -32,4 +32,4 @@ var descriptor = {
 
     // Register the extension
     ScratchExtensions.register("AI Extension", descriptor, ext);
-})({});
+})();
