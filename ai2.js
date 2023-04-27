@@ -1,7 +1,7 @@
 (function(ext) {
 
     // Define your API credentials here
-    const openaiApiKey = "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";
+    const openaiApiKey = "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";
 
     // Define your custom block here
     ext.generateText = function(prompt, callback) {
