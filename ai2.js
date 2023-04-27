@@ -1,5 +1,4 @@
 (function(ext) {
-
     // Define your API credentials here
     const openaiApiKey = '{{ secrets.OPENAI_API_KEY }}';
 
@@ -17,7 +16,12 @@
                 max_tokens: 50
             }),
             success: function(data) {
-                callback(data.choices[0].text);
+                console.log(data);
+                if (data.choices && data.choices.length > 0) {
+                    callback(data.choices[0].text);
+                } else {
+                    callback("");
+                }
             }
         });
     };
@@ -26,9 +30,7 @@
     var descriptor = {
         blocks: [
             ["R", "Generate text from prompt %s", "generateText", "Explain quantum computing in simple terms"]
-        ],
-        menus: {},
-        url: "https://www.example.com/"
+        ]
     };
 
     // Register the extension
