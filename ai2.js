@@ -1,6 +1,6 @@
 (function(ext) {
     // Define your API credentials here
-    const openaiApiKey = '{{ secrets.OPENAI_API_KEY }}';
+    const openaiApiKey = process.env.OPENAI_API_KEY;
 
     // Define your custom block here
     ext.generateText = function(prompt, callback) {
