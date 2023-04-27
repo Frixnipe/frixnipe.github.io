@@ -23,11 +23,12 @@
     };
 
     // Describe your custom block here
-    var descriptor = {
-        blocks: [
-            ["R", "Generate text from prompt %s", "generateText", "Explain quantum computing in simple terms"]
-        ]
-    };
+var descriptor = {
+    blocks: [
+        ["R", "Generate text from prompt %s", "generateText", "Explain quantum computing in simple terms"]
+    ]
+};
+
 
     // Register the extension
     ScratchExtensions.register("AI Extension", descriptor, ext);
