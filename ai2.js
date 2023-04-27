@@ -1,7 +1,7 @@
 (function(ext) {
 
     // Define your API credentials here
-    const openaiApiKey = "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";
+    const openaiApiKey = process.env.OPENAI_API_KEY;
 
     // Define your custom block here
     ext.generateText = function(prompt, callback) {
@@ -25,10 +25,10 @@
     // Describe your custom block here
     var descriptor = {
         blocks: [
-            ["R", "Generate text from prompt %s", "generateText", ""]
+            ["R", "Generate text from prompt %s", "generateText", "Explain quantum computing in simple terms"]
         ]
     };
 
     // Register the extension
     ScratchExtensions.register("AI Extension", descriptor, ext);
-})(function(){});
+})({});
