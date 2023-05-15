@@ -10,12 +10,12 @@
     };
   };
 
-  extension.fetchMessages = function (channelId, callback) {
+  extension.fetchMessages = function (channelId, token, callback) {
     const url = `${API_ENDPOINT}${channelId}`;
     fetch(url, {
       mode: 'cors',
       headers: {
-        'Authorization': `Bearer ${process.env.DISCORD_BOT_TOKEN}`
+        'Authorization': `Bearer ${token}`
       }
     })
       .then((response) => response.text())
