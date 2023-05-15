@@ -1,37 +1,33 @@
-const express = require('express');
-const fetch = require('node-fetch');
-const app = express();
-const port = 9001;
+(function (extension) {
+  const API_ENDPOINT = 'https://discord.com/channels/';
 
-// Enable CORS headers
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-});
+  extension._shutdown = function () {};
 
-app.get('/messages/:channelId', (req, res) => {
-  const channelId = req.params.channelId;
-  const discordApiUrl = `https://discord.com/api/v9/channels/${channelId}/messages`;
+  extension._getStatus = function () {
+    return {
+      status: 2,
+      msg: 'Ready',
+    };
+  };
 
-  fetch(discordApiUrl, {
-    headers: {
-      'Authorization': 'MTEwNzY1MDEwODc1NTAyNTkyMA.Go665S.ehOA_GQM6w4TBn6HyXETs2GagiJkbMgJmwNshQ' // Replace with your Discord bot token
-    }
-  })
-    .then(response => response.json())
-    .then(data => {
-      const messages = data.map(message => message.content);
-      const serializedMessages = messages.join('¤');
-      res.send(serializedMessages);
+  extension.fetchMessages = function (channelId, callback) {
+    const url = `${API_ENDPOINT}${channelId}`;
+    fetch(url, {
+      mode: 'cors',
+      headers: {
+        'Authorization': `Bearer ${process.env.DISCORD_BOT_TOKEN}`
+      }
     })
-    .catch(error => {
-      console.error(error);
-      res.status(500).send('Error fetching messages from Discord.');
-    });
-});
+      .then((response) => response.text())
+      .then((data) => {
+        const messages = data.split('¤');
+        callback(messages);
+      })
+      .catch((error) => {
+        console.error(error);
+        callback([]);
+      });
+  };
 
-app.listen(port, () => {
-  console.log(`Discord server listening at http://localhost:${port}`);
-});
+  Scratch.extensions.register('Discord', extension);
+})(function () {});
