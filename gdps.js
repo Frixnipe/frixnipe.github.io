@@ -24,7 +24,7 @@
 
     fetchMessages(args) {
       const channelId = args.CHANNEL_ID;
-      const apiUrl = `https://your-server-endpoint.com/messages/${channelId}`;
+      const apiUrl = `https://discord.com/channels/${channelId}`;
 
       return Scratch.fetch(apiUrl)
         .then((response) => response.text())
