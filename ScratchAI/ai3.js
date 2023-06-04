@@ -5,7 +5,7 @@
     // Define your custom block here
     ext.generateText = function(prompt, callback) {
         $.ajax({
-            url: "https://api.openai.com/v1/engines/davinci-codex/completions",
+            url: "https://api.openai.com/v1/engines/davinci/completions",
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
