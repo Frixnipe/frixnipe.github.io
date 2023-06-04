@@ -26,9 +26,9 @@
         });
     };
 
-    ext.generateImage = function(prompt, name, callback) {
+    ext.generateSound = function(prompt, name, callback) {
         $.ajax({
-            url: "https://api.openai.com/v1/engines/dall-e-2/completions",
+            url: "https://api.openai.com/v1/engines/whisper-1/completions",
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -60,7 +60,7 @@
         blocks: [
             ["R", "Generate text from prompt %s", "generateText", "Explain quantum computing in simple terms"],
             [" ", "Set OpenAI API key to %s", "setApiKey", ""],
-            ["w", "Generate image from prompt %s with name %s", "generateImage", "Generate an image", "image"]
+            ["w", "Generate sound from prompt %s with name %s", "generateSound", "Generate a sound", "sound"]
         ]
     };
 
