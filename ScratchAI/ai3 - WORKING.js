@@ -40,5 +40,5 @@
     };
 
     // Register the extension
-    ScratchExtensions.register("AI Extension", descriptor, ext);
+    ScratchExtensions.register("AI", descriptor, ext);
 })({});
